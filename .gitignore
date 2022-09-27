@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# pypi upload script
+pypi_build.sh
+pypi_upload.sh
