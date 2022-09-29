@@ -4,19 +4,16 @@
 Out-of-the box Pyodide lacks support for a pure Python solution to using web workers. PyWebWorker seeks to fill that 
 gap by providing a set of Python objects and functions to interact with the Web Worker API.
 
-## Requirements
-The only requirement PyWebWorker imposes, aside from being imported via MicroPip, is that a variable named "pyodide" 
-be in-scope for any scripts executed by pyodide.code.run_js. In order to avoid requiring users to add additional 
-JavaScript files for this module to run, scripts are executed using pyodide.code.run_js during the import process 
-that registers a handful of JavaScript classes used to interface with the Web Worker API as python modules.
+## Installation
+PyWebWorker can be imported using **micropip**:
 
-It is a goal to eventually remove this, however for the time being **it is necessary for any project using this module
-to have a variable named "pyodide" pointing to the pyodide module in the executing JavaScript.** If the Pyodide object
-is not made available in-scope with this name, *this module will not function.* See the "examples" folder for demos on
-how to accomplish this, it is very simple.
+```python
+import micropip
+await micropip.install('pywebworker')
+```
 
 ## Quick Reference
-The examples here are valid as of **Version 0.0.5**
+The examples here are valid as of **Version 0.0.6**
 
 ```python
 from pywebworker.worker import PyWorker
@@ -85,18 +82,8 @@ worker.kill()
 - Ability to pass environment settings to the interpreter in PyWorkers (currently runs on defaults)
 - Creation of flexible thread pool for PyWorkers
 
-### Version 1.X.0: Mid-importance work, not in immediate plans
-
-- Remove requirement to have Pyodide JavaScript object as in-scope variable named "pyodide"
-
 ## Known Limitations
 
 ### PyWorkers are slow to start
-Pyodide has to be downloaded and started in each worker thread, which takes time. The goal is to eventually have a pool
-of threads that download the necessary code on creation and resets the environment between processes. This is a
-must-have for the near future and *will* be resolved.
-
-### In-scope Pyodide variable in JavaScript Required
-Because of the way the package works, the Pyodide object must be an in-scope variable for `pyodide.code.run_js`. 
-This is not a high-priority issue, however it is something that will be worked on so that it is no longer needed.
-Suggestions on this are absolutely welcome.
+In order to run Pyodide in a worker, it must be downloaded and started in each worker thread, which takes time. The 
+goal is to eventually have a pool of threads that start this process in the background on import.

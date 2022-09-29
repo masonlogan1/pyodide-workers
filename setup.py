@@ -7,17 +7,19 @@ here = os.path.abspath(os.path.dirname(__file__))
 with codecs.open(os.path.join(here, "README.md"), encoding="utf-8") as fh:
     long_description = "\n" + fh.read()
 
-VERSION = '0.0.5'
+VERSION = '0.0.6'
 DESCRIPTION = 'Python tools for interacting with Web Workers in Pyodide'
 LONG_DESCRIPTION = 'A package that wraps generic JavaScript with Python classes to allow for the easy use of the Web ' \
                    'Worker API in Pyodide Projects'
 
 # Setting up
+# noinspection SpellCheckingInspection
 setup(
     name="pywebworker",
     version=VERSION,
     author="malogan (Mason Logan)",
-    author_email="<masonlogan1@gmail.com>",
+    author_email="<dev@masonlogan.com>",
+    url='https://github.com/masonlogan1/pywebworker',
     description=DESCRIPTION,
     long_description_content_type="text/markdown",
     long_description=long_description,

@@ -131,3 +131,6 @@ dmypy.json
 # pypi upload script
 pypi_build.sh
 pypi_upload.sh
+
+# personal workspace
+server/

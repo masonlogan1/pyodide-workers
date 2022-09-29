@@ -3,6 +3,8 @@ web requests"""
 # NOTE: YOU MUST HAVE THE PYODIDE OBJECT AVAILABLE AS A GLOBAL VARIABLE IN JAVASCRIPT NAMED "pyodide". AS OF RIGHT NOW,
 # THIS IS THE ONLY THING NEEDED ON THE END
 
+
+
 SETUP_JS = '''
 WorkerException = class extends Error {
   constructor(message){
@@ -94,13 +96,17 @@ WebWorker = class {
       return new WebWorker(script);
   }
 }
-pyodide.registerJsModule('webworker', WebWorker);'''
+'''
 
 
 # this will be run when the module is imported
 def setup():
+    import js
+    import pyodide_js
     from pyodide.code import run_js
-    run_js(SETUP_JS)
 
+    js.load_to_pyodide = pyodide_js.registerJsModule
+
+    run_js(SETUP_JS + "load_to_pyodide('webworker', WebWorker);")
 
 setup()
