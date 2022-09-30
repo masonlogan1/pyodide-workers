@@ -5,7 +5,7 @@ let pyodideReadyPromise = null;
 
 // IMPORTANT: This variable MUST be present! It will allow access to the pyodide object for ANY js execution in-scope
 // which is necessary for the web workers
-let pyodide = null;
+//let pyodide = null;
 
 // TODO: This script needs refactoring for readability and maintainability
 
@@ -55,12 +55,12 @@ async function setup() {
 
 async function set_pyodide(){
     console.log('Setting up pyodide instance...')
-    pyodide = await pyodideReadyPromise;
-
+    //pyodide = await pyodideReadyPromise;
 }
 
 // pass the editor value to the pyodide.runPython function and show the result in the output section
 async function evaluatePython() {
+    let pyodide = await pyodideReadyPromise;
     try {
         pyodide.runPython(`
           import io

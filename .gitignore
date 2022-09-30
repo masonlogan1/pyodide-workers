@@ -132,5 +132,7 @@ dmypy.json
 pypi_build.sh
 pypi_upload.sh
 
-# personal workspace
-server/
+# development files
+index.html
+main.js
+run.sh
