@@ -7,7 +7,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 with codecs.open(os.path.join(here, "README.md"), encoding="utf-8") as reader:
     long_description = '\n'.join(reader.readlines())
 
-VERSION = '0.0.7dev2'
+VERSION = '0.0.8'
 DESCRIPTION = 'Python tools for interacting with Web Workers in Pyodide'
 LONG_DESCRIPTION = long_description
 

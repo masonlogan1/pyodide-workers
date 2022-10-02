@@ -13,10 +13,11 @@ await micropip.install('pywebworker')
 ```
 
 ## Quick Reference
-The examples here are valid as of **Version 0.0.6**
+The examples here are valid as of **Version 0.0.8**
 
+### Sending/Receiving with built-in messaging
 ```python
-from pywebworker.worker import PyWorker
+from pywebworker import Worker
 
 # This script will print a message to the console when the worker starts and
 # will echo back any messages it receives
@@ -28,7 +29,10 @@ self.onmessage = function(message){
 }
 '''
 
-worker = PyWorker(script)
+# IMPORTANT NOTE: executing this whole script will yield errors! Because the worker executes in another thread, this
+# script will go to the next line IMMEDIATELY after sending a message. The workers, while very fast, cannot echo the 
+# messages back that quickly.
+worker = Worker(script)
 worker.start()
 
 # the script echos back whatever we send, that message should be ready for us
@@ -45,20 +49,66 @@ print(worker.has_unread_messages())
 # individual messages can be checked to see if they have been read or not
 first_message = worker.get_message(0)
 second_message = worker.get_message(1)
-print(first_message.is_opened())
-print(second_message.is_opened())
+print(first_message.is_read())
+print(second_message.is_read())
 
-# this isn't recommended, but if you really need to check for new messages without using has_unread_messages() or
-# get_unread_messages(), _update_messages() will update the messages attribute.
-# PLEASE NOTE THAT THIS IS A TEMPORARY WAY TO UPDATE THE LIST, THIS WILL BE REMOVED LATER
+# messages can be directly requested as well
 worker.send_message('This is the third message')
-worker._update_messages()
 print(worker.get_message(2).read())
+
+# you can also get the next unread message:
+worker.send_message('This is the fourth message')
+print(worker.get_next_unread_message().read())
 
 # killing the worker stops it *immediately*. Anything in-progress will be stopped, so only use this when it is certain
 # the worker is done and no longer needed!
 worker.kill()
 ```
+
+### Sending/Receiving with custom onmessage process
+```python
+from pywebworker import Worker, WorkerMessageQueue
+
+# sample script for quick testing
+sample_script = '''
+console.log('worker created');
+self.onmessage = function(message){
+    console.log('Received: ' + message.data);
+    self.postMessage(message.data);
+}
+'''
+
+# WorkerMessageQueue objects are provided to more easily convert JavaScript's EventMessage objects into more
+# python-friendly WorkerMessage objects, but any function can be given to onmessage
+message_queue = WorkerMessageQueue()
+queue_method = lambda event: message_queue.put(event)
+worker = Worker(sample_script, [queue_method])
+worker.start()
+
+# Functions can also be added to the onmessage execution process after the worker is created
+#worker.add_to_onmessage(lambda event: message_queue.put(event))
+
+# Reminder: executing this entire block at once will cause an error; the worker cannot echo as fast as pyodide moves
+# to the next line
+worker.send_message('message 0')
+print(worker.messages)
+queue_message = message_queue.get()
+print(queue_message.read())
+```
+
+### Sending/Receiving using Python code
+```python
+from pywebworker import PyWorker
+
+# PyWorkers can take time to load! Give it a few seconds to get running before expecting the output
+worker = PyWorker()
+worker.start()
+
+# whatever is passed via send_message is executed!
+worker.send_message("print('hello world')")
+print(worker.get_next_unread_message().read())
+```
+
 
 ## Roadmap
 
@@ -68,7 +118,6 @@ worker.kill()
 
 - PyWorker and JsWorker as objects that run either Python or JavaScript, respectively
 - Exception handling for common errors
-- Message queues for inbound/outbound messages to the worker
 - Enhancements to underlying JavaScript
 - Add tests for basic object functions
 
