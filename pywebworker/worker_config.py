@@ -1,106 +1,36 @@
 """When imported, this module will create and register a javascript module to server as the foundation for making
 web requests"""
-# NOTE: YOU MUST HAVE THE PYODIDE OBJECT AVAILABLE AS A GLOBAL VARIABLE IN JAVASCRIPT NAMED "pyodide". AS OF RIGHT NOW,
-# THIS IS THE ONLY THING NEEDED ON THE END
+import os
+import js
+import pyodide_js
+from pyodide.code import run_js
 
-SETUP_JS = '''
-WorkerException = class extends Error {
-  constructor(message){
-      super(message);
-      this.name = this.constructor.name;
-  }
-}
 
-WebWorker = class {
+def setup_worker_js() -> str:
+    """
+    Returns JavaScript that can be executed to create the Python-JavaScript Worker objects
+    :return: executable js code
+    """
+    with open(os.path.abspath(os.path.dirname(__file__))+'/worker.js', 'r') as reader:
+        js = ''.join(reader.readlines())
+    return js
 
-  DATA_URI_PREFIX = 'data:text/javascript,'
 
-  messages = [];
-  state = 'Ready';
-  id = window.performance.now().toString()+ (Math.random()*10000000).toFixed();
-
-  constructor(script){
-      this.script = script;
-  }
-
-  start(){
-      /*
-      Starts a pywebworker thread using a data URI
-      */
-      if (this.state === 'Running'){
-          throw new WorkerException('Cannot start ' + this.id +', pywebworker is already running');
-      }
-      this.pywebworker = new Worker(this.DATA_URI_PREFIX + this.script);
-      this.pywebworker.onmessage = (event) => {
-          this.messages[this.messages.length] = event;
-      }
-      this.state = 'Running';
-  }
-
-  set_script(newScript){
-      /*
-      sets the existing script to a new script value
-      */
-      this.script = newScript
-  }
-
-  get_script(){
-      return this.script
-  }
-
-  get_state(){
-      /*
-      returns the state of the instance
-      */
-      return this.state;
-  }
-
-  get_id(){
-      /*
-      returns the ID of the instance
-      */
-      return this.id;
-  }
-
-  get_messages(){
-      /*
-      returns the most recent message from the pywebworker
-      */
-      return this.messages;
-  }
-
-  send_message(message){
-      /*
-      sends a message to the pywebworker via the postMessage method
-      */
-      this.pywebworker.postMessage(message);
-  }
-
-  kill() {
-      /*
-      kills the pywebworker thread
-      */
-      if (this.state !== 'Running'){
-          throw new WorkerException('Cannot terminate ' + this.id +', pywebworker is not running');
-      }
-      this.pywebworker.terminate()
-  }
-
-  static create_worker(script) {
-      /*
-      Creates a new PyWorker object with the provided script
-      */
-      console.debug('creating new PyWorker');
-      return new WebWorker(script);
-  }
-}
-pyodide.registerJsModule('webworker', WebWorker);'''
+def get_pyworker_js() -> str:
+    """
+    Returns JavaScript that can be run in a web worker thread to allow python code passed via event messages to be
+    executed and the results returned
+    :return: executable js code
+    """
+    with open(os.path.abspath(os.path.dirname(__file__))+'/pyworker.js', 'r') as reader:
+        js = ''.join(reader.readlines())
+    return js
 
 
 # this will be run when the module is imported
 def setup():
-    from pyodide.code import run_js
-    run_js(SETUP_JS)
-
-
+    js.load_to_pyodide = pyodide_js.registerJsModule
+    run_js(setup_worker_js() + "\nload_to_pyodide('pywebworker_js', new_worker);")
 setup()
+
+PYWORKER_SCRIPT = get_pyworker_js()

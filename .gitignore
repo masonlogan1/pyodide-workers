@@ -131,3 +131,8 @@ dmypy.json
 # pypi upload script
 pypi_build.sh
 pypi_upload.sh
+
+# development files
+index.html
+main.js
+run.sh
