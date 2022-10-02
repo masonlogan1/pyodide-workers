@@ -24,7 +24,7 @@ setup(
     long_description=long_description,
     packages=find_packages(),
     install_requires=[],
-    data_files=[('js', ['pywebworker/worker.js'])],
+    data_files=[('js', ['pywebworker/worker.js', 'pywebworker/pyworker.js'])],
     include_package_data=True,
     keywords=['python', 'pyodide', 'web workers', 'web api'],
     classifiers=[

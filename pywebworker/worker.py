@@ -79,17 +79,17 @@ class WorkerMessageQueue:
 
     def put(self, event):
         """
-        :param event: Web worker event
         Converts a web worker event into a WorkerMessage and puts it into a queue
+        :param event: Web worker event
         """
         self.queue.put(WorkerMessage(event.data))
 
     def get(self, block=False, timeout=None) -> WorkerMessage:
         """
+        Returns the next item in the Queue. Blocking disabled by default to prevent unintentionally locking the browser
         :param block: whether to wait for the next message
         :param timeout: time to wait for the next message, if applicable
         :return: the next WorkerMessage in the queue
-        Returns the next item in the Queue. Blocking disabled by default to prevent unintentionally locking the browser
         """
         return self.queue.get(block=block, timeout=timeout)
 
@@ -103,6 +103,13 @@ class Worker:
     Creates a browser-friendly, pythonic way of using web workers with pyodide
     """
     def __init__(self, script, onmessage_actions=None, loglevel=logging.DEBUG):
+        """
+
+        :param script: the script to be executed in the web worker thread
+        :param onmessage_actions: an iterable of functions to be executed when a message is received from the worker
+        :param loglevel: level at which to produce log messages
+        """
+        # TODO: improve logging
         self.logger = logging.getLogger('PyWorker')
         self.logger.setLevel(loglevel)
 
@@ -127,8 +134,8 @@ class Worker:
 
     def get_next_unread_message(self) -> WorkerMessage:
         """
-        :return: the next unread message from the list, if one exists
         Provides the next unread message. If one does not exist, returns None
+        :return: the next unread message from the list, if one exists
         """
         return self.get_unread_messages()[0]
 
@@ -165,8 +172,8 @@ class Worker:
 
     def set_script(self, script) -> None:
         """
-        :param script: the new script to use
         Sets the script for the worker. Must be set before starting, script cannot be changed once in progress
+        :param script: the new script to use
         """
         if self.worker.get_state() != 'Running':
             return self.worker.set_script(script)
@@ -182,27 +189,27 @@ class Worker:
 
     def set_onmessage(self, functions) -> None:
         """
-        :param functions: an iterable of functions to be run whenever a message is received from the worker
         Sets the actions to be run whenever a message is received. Function to populate messages will be automatically
         added
+        :param functions: an iterable of functions to be run whenever a message is received from the worker
         """
         to_add = functions if functions else []
         self.__onmessage_actions = [lambda event: self.messages.append(WorkerMessage(event.data))] + to_add
 
     def get_onmessage(self) -> list:
         """
-        :return: all functions to be run during onmessage process
         Returns all functions that are run when a message is received from the worker. Excludes message collection
         function that is automatically run whenever list is set
+        :return: all functions to be run during onmessage process
         """
         return self.__onmessage_actions[1:]
 
     def __onmessage(self, event) -> None:
         """
-        :param event: message event from the web worker
         Populates the messages and runs any other provided actions whenever a message is received. New functions can
         be added with add_to_onmessage or set_onmessage. Any exceptions will be captured and logged to prevent
         any single action from breaking any processes dependent on the incoming messages
+        :param event: message event from the web worker
         """
         for index, action in enumerate(self.__onmessage_actions):
             try:
@@ -213,8 +220,8 @@ class Worker:
 
     def start(self) -> str:
         """
-        :return: the id value for the worker
         Starts the web pywebworker and the message listening service
+        :return: the id value for the worker
         """
         self.worker.start()
         self.worker.pywebworker.onmessage = lambda event: self.__onmessage(event)
