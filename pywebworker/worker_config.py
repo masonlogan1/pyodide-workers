@@ -31,6 +31,19 @@ def get_pyworker_js() -> str:
 def setup():
     js.load_to_pyodide = pyodide_js.registerJsModule
     run_js(setup_worker_js() + "\nload_to_pyodide('pywebworker_js', new_worker);")
+
+
 setup()
+import pywebworker_js
+
+
+def WORKER_OBJ(script):
+    """
+    Convenience for allowing consumers of the javascript object to no longer need to directly import the class
+    registered by pyodide
+    :param script: the script to be provided to the web worker
+    :return: webworker javascript object
+    """
+    return pywebworker_js(script)
 
 PYWORKER_SCRIPT = get_pyworker_js()

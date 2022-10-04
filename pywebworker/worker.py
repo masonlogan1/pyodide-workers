@@ -3,11 +3,7 @@ import logging
 from collections.abc import Iterable
 from datetime import datetime
 from queue import Queue
-import pywebworker.worker_config
-
-# this module is registered in worker_config.py
-import pywebworker_js
-
+from pywebworker.worker_config import WORKER_OBJ
 
 DEFAULT_LOG_LEVEL = logging.DEBUG
 # default logger
@@ -47,6 +43,7 @@ class FatalWorkerError(WorkerError):
 
 class WorkerMessage:
     """Message from a PyWorker web pywebworker"""
+
     def __init__(self, data, status=False, timestamp=datetime.now()):
         # TODO: add datetime for when message was sent
         self.data = data
@@ -74,6 +71,7 @@ class WorkerMessageQueue:
     """
     Queue that converts web worker events into WorkerMessage objects before queueing for user collection
     """
+
     def __init__(self):
         self.queue = Queue()
 
@@ -102,6 +100,7 @@ class Worker:
     """
     Creates a browser-friendly, pythonic way of using web workers with pyodide
     """
+
     def __init__(self, script, onmessage_actions=None, loglevel=logging.DEBUG):
         """
 
@@ -114,43 +113,41 @@ class Worker:
         self.logger.setLevel(loglevel)
 
         self.script = script
-        self.worker = pywebworker_js(script)
+        self.worker = WORKER_OBJ(script)
 
         self.messages = list()
 
         self.__onmessage_actions = list()
         self.set_onmessage(onmessage_actions)
 
-    # some of these might seem unnecessary, but they make importing the script and jumping right in MUCH easier
     def has_unread_messages(self) -> bool:
         """
         Returns True if there are any unread messages
         """
-        return self.get_unread_messages() != list()
-
-    def get_unread_messages(self) -> list[WorkerMessage]:
-        """adds any missing messages to the message repository and returns anything not marked as opened"""
-        return [message for message in self.messages if not message.is_read()]
+        return self.get_messages(read=False) != list()
 
     def get_next_unread_message(self) -> WorkerMessage:
         """
         Provides the next unread message. If one does not exist, returns None
         :return: the next unread message from the list, if one exists
         """
-        return self.get_unread_messages()[0]
+        return self.get_messages(read=False)[0]
 
-    def get_message(self, index) -> WorkerMessage:
+    def get_messages(self, before: datetime = None, after: datetime = None, read: bool = None, cust_filter=None) -> \
+            list[WorkerMessage]:
         """
-        Returns the message at the index
-        """
-        return self.messages[index]
-
-    def get_messages(self) -> list[WorkerMessage]:
-        """
+        Provides all messages meeting criteria
+        :param before: maximum timestamp value
+        :param after: minimum timestamp value
+        :param read: whether the message(s) have been read
+        :param cust_filter: custom function for retrieving messages
         :return: list of messages
         """
-        # TODO: add ability to filter messages by time received
-        return self.messages
+        return [message for message in self.messages if
+                all((message.received() >= after if after and isinstance(after, datetime) else True,
+                     message.received() <= before if before and isinstance(before, datetime) else True,
+                     message.is_read() == read if isinstance(read, bool) else True,
+                     cust_filter(message) if cust_filter else True))]
 
     def send_message(self, message) -> None:
         """
@@ -204,6 +201,13 @@ class Worker:
         """
         return self.__onmessage_actions[1:]
 
+    def flush_messages(self, keep_unread=False) -> None:
+        """
+        Clears all messages. Keeps unread messages if keep_unread is set to True
+        :param keep_unread: deletes only unread messages if True
+        """
+        self.messages = [message for message in self.messages if not message.is_read()] if keep_unread else []
+
     def __onmessage(self, event) -> None:
         """
         Populates the messages and runs any other provided actions whenever a message is received. New functions can
@@ -211,6 +215,8 @@ class Worker:
         any single action from breaking any processes dependent on the incoming messages
         :param event: message event from the web worker
         """
+        # Don't set this directly unless you really need to! You can provide as many custom functions as you want,
+        # unless you REALLY want the built-in message collector shut off this really does not need to be set
         for index, action in enumerate(self.__onmessage_actions):
             try:
                 action(event)
@@ -239,4 +245,4 @@ class Worker:
         except Exception as e:
             # Currently we just discard all exceptions, the goal is really just to execute the kill command so threads
             # aren't lost to the void
-            pass
+            logger.exception(e)

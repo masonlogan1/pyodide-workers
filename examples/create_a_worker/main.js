@@ -86,7 +86,7 @@ async function reset() {
 // This is the text that will be loaded into the editor
 const python_script = `import micropip
 await micropip.install('pywebworker')
-from pywebworker.worker import PyWorker
+from pywebworker import Worker
 
 # this is the script that will be loaded into the worker
 script = '''
@@ -98,7 +98,7 @@ self.onmessage = function(message){
 '''
 
 # create the worker by passing in a script as a string
-worker = PyWorker(script)
+worker = Worker(script)
 worker.start()
 
 # check the browser console, you should see 'worker created'`
