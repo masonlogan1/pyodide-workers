@@ -241,8 +241,7 @@ class Worker:
 
     def __del__(self):
         try:
-            if self.worker:
-                self.kill()
+            self.kill()
         except Exception as e:
             # Currently we just discard all exceptions, the goal is really just to execute the kill command so threads
             # aren't lost to the void
