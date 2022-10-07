@@ -128,6 +128,32 @@ class MyTestCase(unittest.TestCase):
 
         self.assertEqual(sample_actions, test_worker.get_onmessage())
 
+    def test_get_onmessage(self, mock_worker_obj):
+        """Tests that get_onmessage returns the full list of onmessage functions, excluding the built-in message
+        handler"""
+        sample_script = 'script'
+
+        action_0 = lambda event: event
+        action_1 = lambda event: event
+        sample_actions = [action_0, action_1]
+
+        test_worker = worker.Worker(sample_script)
+        # manually sets the onmessage actions
+        test_worker._Worker__onmessage_actions = sample_actions
+
+        self.assertEqual(test_worker.get_onmessage(), sample_actions)
+
+    def test_add_to_onmessage_single_function(self, mock_worker_obj):
+        """Tests that the add_to_onmessage function adds a single function when passed"""
+        sample_script = 'script'
+
+        action_0 = lambda event: event
+
+        test_worker = worker.Worker(sample_script)
+        test_worker.add_to_onmessage(action_0)
+
+        self.assertEqual([action_0], test_worker.get_onmessage())
+
 
 if __name__ == '__main__':
     unittest.main()

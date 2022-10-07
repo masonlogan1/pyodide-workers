@@ -101,7 +101,7 @@ class Worker:
     Creates a browser-friendly, pythonic way of using web workers with pyodide
     """
 
-    def __init__(self, script, onmessage_actions=None, loglevel=logging.DEBUG):
+    def __init__(self, script, onmessage_actions=None, loglevel=logging.DEBUG, use_default_collector=True):
         """
 
         :param script: the script to be executed in the web worker thread
@@ -115,7 +115,9 @@ class Worker:
         self.script = script
         self.worker = WORKER_OBJ(script)
 
-        self.messages = list()
+        self.default_collector = lambda event: self.messages.append(WorkerMessage(event.data)) if use_default_collector\
+            else None
+        self.messages = list() if self.default_collector else None
 
         self.__onmessage_actions = list()
         self.set_onmessage(onmessage_actions)
@@ -190,16 +192,17 @@ class Worker:
         added
         :param functions: an iterable of functions to be run whenever a message is received from the worker
         """
+        default = [self.default_collector] if self.default_collector else []
         to_add = functions if functions else []
-        self.__onmessage_actions = [lambda event: self.messages.append(WorkerMessage(event.data))] + to_add
+        self.__onmessage_actions = default + to_add
 
     def get_onmessage(self) -> list:
         """
-        Returns all functions that are run when a message is received from the worker. Excludes message collection
-        function that is automatically run whenever list is set
+        Returns all functions that are run when a message is received from the worker. Excludes default message
+        collection function that is automatically run whenever list is set
         :return: all functions to be run during onmessage process
         """
-        return self.__onmessage_actions[1:]
+        return [action for action in self.__onmessage_actions if action != self.default_collector]
 
     def flush_messages(self, keep_unread=False) -> None:
         """
